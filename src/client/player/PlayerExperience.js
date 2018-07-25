@@ -157,10 +157,9 @@ class PlayerExperience extends soundworks.Experience {
 
     const a = destination[0] - lat;
     const b = destination[1] - lng;
-    const distance = Math.sqrt(a * a + b * b);
+    const distance = Math.min(distanceUnit, Math.max(0, Math.sqrt(a * a + b * b)));
 
     const avg = this.movingAverage.process(distance);
-    console.log(avg);
 
     const positionVar = this.positionVarScale(distance);
     const period = this.periodScale(distance);
