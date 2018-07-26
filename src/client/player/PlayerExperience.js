@@ -34,8 +34,8 @@ const template = `
 `;
 
 const center = [49.8617273,8.6521731];
-const minRadius = [49.861524, 8.650514];
-const maxRadius = [49.859404, 8.647011];
+const minRadius = [49.861529, 8.651291];
+const maxRadius = [49.860145, 8.648228];
 
 const minA = center[0] - minRadius[0];
 const minB = center[1] - minRadius[1];
