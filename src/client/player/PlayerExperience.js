@@ -22,12 +22,12 @@ const template = `
       -->
       <pre>lat: <%= latitude %></pre>
       <pre>lng: <%= longitude %></pre>
+      <pre>NormDistance: <%= normDistance %></pre>
       <!--
       <br />
       <pre>distance: <%= distance %></pre>
       <pre>minDist: <%= minDist %></pre>
       <pre>maxDist: <%= maxDist %></pre>
-      <pre>NormDistance: <%= normDistance %></pre>
       -->
     </div>
   </div>
@@ -175,7 +175,6 @@ class PlayerExperience extends soundworks.Experience {
 
   updateSynth(distance) {
     distance = Math.min(1, Math.max(0, distance));
-    distance *= distance;
 
     this.view.model.normDistance = distance;
 
