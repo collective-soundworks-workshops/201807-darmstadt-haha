@@ -67,8 +67,10 @@ class SyncPlayControl extends Service {
       this.broadcast(null, null, 'acknowledge:seek', syncTime, this._position);
     });
 
-    if (this._state === 'start')
-      this.send(client, 'acknowledge:start', this._startTime, this._position);
+    this.receive(client, 'request:state', () => {
+      if (this._state === 'start')
+        this.send(client, 'acknowledge:start', this._startTime, this._position);
+    });
   }
 
   disconnect(client) {

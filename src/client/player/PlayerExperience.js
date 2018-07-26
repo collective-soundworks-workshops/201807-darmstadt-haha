@@ -9,23 +9,31 @@ const template = `
   <canvas class="background"></canvas>
   <div class="foreground">
     <div class="section-top"></div>
-    <div class="section-center">
+    <div class="section-center flex-center">
+      <p>
+        Please come to the<br />
+        <b>Mornewegschule</b>
+      </p>
+    </div>
+    <div class="section-bottom">
+      <!--
       <pre>center lat: <%= center[0] %></pre>
       <pre>center lng: <%= center[1] %></pre>
+      -->
       <pre>lat: <%= latitude %></pre>
       <pre>lng: <%= longitude %></pre>
+      <!--
       <br />
       <pre>distance: <%= distance %></pre>
       <pre>minDist: <%= minDist %></pre>
       <pre>maxDist: <%= maxDist %></pre>
       <pre>NormDistance: <%= normDistance %></pre>
+      -->
     </div>
-    <div class="section-bottom flex-middle"></div>
   </div>
 `;
 
 const center = [49.8617273,8.6521731];
-// 49.8617678,8.6512013
 const minRadius = [49.861524, 8.650514];
 const maxRadius = [49.859404, 8.647011];
 
@@ -35,10 +43,9 @@ const minDist = Math.sqrt(minA * minA + minB * minB);
 
 const maxA = center[0] - maxRadius[0];
 const maxB = center[1] - maxRadius[1];
-console.log(maxA);
-console.log(maxB);
 const maxDist = Math.sqrt(maxA * maxA + maxB * maxB);
-console.log(maxDist);
+console.log('minDist:', minDist);
+console.log('maxDist:', maxDist);
 
 
 const model = {
@@ -51,10 +58,6 @@ const model = {
   minDist: minDist,
   maxDist: maxDist,
 };
-
-// console.log(minDist, maxDist);
-// minDist: 0.000999955123994715
-// maxDist: 0.0034716401671263776
 
 class MovingAverage {
   constructor(order) {
@@ -100,12 +103,13 @@ class PlayerExperience extends soundworks.Experience {
   constructor(assetsDomain) {
     super();
 
-    this.platform = this.require('platform', { features: ['web-audio'] });
+    this.platform = this.require('platform', {
+      features: ['web-audio', 'wake-lock', 'geolocation'],
+    });
     this.checkin = this.require('checkin', { showDialog: false });
     this.audioBufferManager = this.require('audio-buffer-manager', {
       assetsDomain: assetsDomain,
       files: {
-        // bach: 'sounds/gould-bach-first-prelude.wav',
         haha: 'sounds/take-on-me.mp3',
       },
     });
@@ -179,14 +183,6 @@ class PlayerExperience extends soundworks.Experience {
     const period = this.periodScale(distance);
     const resampling = this.resamplingScale(distance);
     const resamplingVar = this.resamplingVarScale(distance);
-
-    console.log('distance:', distance);
-    // console.log('avg:', avg);
-    console.log('positionVar:', positionVar);
-    console.log('period:', period);
-    console.log('resampling:', resampling);
-    console.log('resamplingVar:', resamplingVar);
-    console.log('------------------------------');
 
     this.granular.positionVar = positionVar;
     this.granular.period = period;

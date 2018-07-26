@@ -30,6 +30,8 @@ class SyncPlayControl extends Service {
 
       this._playControl.seek(adjustedPosition);
       this._playControl.start();
+
+      console.log(eventTime, position);
     });
 
     this.receive('acknowledge:pause', eventTime => {
@@ -47,6 +49,8 @@ class SyncPlayControl extends Service {
 
       this._playControl.seek(adjustedPosition);
     });
+
+    this.send('request:state');
 
     this.ready();
   }
