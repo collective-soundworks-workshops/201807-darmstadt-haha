@@ -12,7 +12,7 @@
 - copy `src/client/shared` directory
 - update `src/client/**/index.js`
 
-```
+```js
 - import viewTemplates from '../shared/viewTemplates';
 - import viewContent from '../shared/viewContent';
 + import serviceViews from '../shared/serviceViews';
@@ -37,7 +37,7 @@ soundworks.client.init(config.clientType, config);
 
 - update `src/server/index.js`
 
-```
+```js
 + import path from 'path';
 - import defaultConfig from './config/default';
 + const configName = process.env.ENV || 'default';

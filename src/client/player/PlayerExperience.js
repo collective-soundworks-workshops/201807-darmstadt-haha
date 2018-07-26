@@ -25,17 +25,27 @@ const template = `
 `;
 
 const model = {
-  title: `ok`,
+  // title: `ok`,
   latitude: 0,
   longitude: 0,
   distance: '',
 };
 
-const destination = [49.8614944, 8.6505726];
-const source = [49.8624312, 8.6526182];
-const a = destination[0] - source[0];
-const b = destination[1] - source[1];
-const distanceUnit = Math.sqrt(a * a + b * b);
+const center = [49.8617544,8.6495363];
+const minRadius = [49.861540, 8.650513];
+const maxRadius = [49.859386, 8.646998]
+
+const minA = center[0] - minRadius[0];
+const minB = center[1] - minRadius[1];
+const minDist = Math.sqrt(minA * minA + minB * minB);
+
+const maxA = center[0] - maxRadius[0];
+const maxB = center[1] - maxRadius[1];
+const maxDist = Math.sqrt(maxA * maxA + maxB * maxB);
+
+// console.log(minDist, maxDist);
+// minDist: 0.000999955123994715
+// maxDist: 0.0034716401671263776
 
 class MovingAverage {
   constructor(order) {
@@ -117,12 +127,15 @@ class PlayerExperience extends soundworks.Experience {
       this.granular.buffer = this.audioBufferManager.data.haha;
       this.granular.connect(audioContext.destination);
 
+      console.log()
       this.syncTimeline.add(this.granular);
+      this.syncTimeline._playControl.setLoopBoundaries(0, this.audioBufferManager.data.haha.duration);
+      this.syncTimeline._playControl.loop = true;
 
-      this.positionVarScale = createScale([0, distanceUnit], [0, 0.121]);
-      this.periodScale = createScale([0, distanceUnit], [0.052, 0.174]);
-      this.resamplingScale = createScale([0, distanceUnit], [0, -1140]);
-      this.resamplingVarScale = createScale([0, distanceUnit], [0, 824]);
+      this.positionVarScale = createScale([minDist, maxDist], [0, 0.121]);
+      this.periodScale = createScale([minDist, maxDist], [0.052, 0.174]);
+      this.resamplingScale = createScale([minDist, maxDist], [0, -1140]);
+      this.resamplingVarScale = createScale([minDist, maxDist], [0, 824]);
       this.movingAverage = new MovingAverage(20);
 
       setInterval(() => {
@@ -130,16 +143,23 @@ class PlayerExperience extends soundworks.Experience {
       }, 200);
 
       this.sharedParams.addParamListener('distanceMock', value => {
-        const dist = value * distanceUnit;
+        const dist = Math.min(maxDist, Math.max(minDist, value * maxDist));
         const positionVar = this.positionVarScale(dist);
         const period = this.periodScale(dist);
         const resampling = this.resamplingScale(dist);
         const resamplingVar = this.resamplingVarScale(dist);
 
-        console.log(positionVar);
-        console.log(period);
-        console.log(resampling);
-        console.log(resamplingVar);
+        console.log('dist:', dist);
+        console.log('positionVar:', positionVar);
+        console.log('period:', period);
+        console.log('resampling:', resampling);
+        console.log('resamplingVar:', resamplingVar);
+        console.log('------------------------------');
+
+        // this.granular.positionVar = positionVar;
+        // this.granular.period = period;
+        // this.granular.resampling = resampling;
+        // this.granular.resamplingVar = resamplingVar;
       });
 
       this.renderer = new PlayerRenderer();
@@ -155,9 +175,9 @@ class PlayerExperience extends soundworks.Experience {
     const lng = geo.coords.longitude;
     this.coordinates = [lat, lng];
 
-    const a = destination[0] - lat;
-    const b = destination[1] - lng;
-    const distance = Math.min(distanceUnit, Math.max(0, Math.sqrt(a * a + b * b)));
+    const a = center[0] - lat;
+    const b = center[1] - lng;
+    const distance = Math.min(maxDist, Math.max(minDist, Math.sqrt(a * a + b * b)));
 
     const avg = this.movingAverage.process(distance);
 
