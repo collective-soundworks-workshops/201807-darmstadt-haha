@@ -8,32 +8,26 @@ const audio = soundworks.audio;
 const template = `
   <canvas class="background"></canvas>
   <div class="foreground">
-    <div class="section-top">
-      <button id="0" class="btn record">0</button>
-      <button id="1" class="btn record">1</button>
-      <button id="2" class="btn record">2</button>
-      <button id="3" class="btn record">3</button>
-    </div>
+    <div class="section-top"></div>
     <div class="section-center">
+      <pre>center lat: <%= center[0] %></pre>
+      <pre>center lng: <%= center[1] %></pre>
       <pre>lat: <%= latitude %></pre>
       <pre>lng: <%= longitude %></pre>
       <br />
       <pre>distance: <%= distance %></pre>
+      <pre>minDist: <%= minDist %></pre>
+      <pre>maxDist: <%= maxDist %></pre>
+      <pre>NormDistance: <%= normDistance %></pre>
     </div>
     <div class="section-bottom flex-middle"></div>
   </div>
 `;
 
-const model = {
-  // title: `ok`,
-  latitude: 0,
-  longitude: 0,
-  distance: '',
-};
-
-const center = [49.8617544,8.6495363];
-const minRadius = [49.861540, 8.650513];
-const maxRadius = [49.859386, 8.646998]
+const center = [49.8617273,8.6521731];
+// 49.8617678,8.6512013
+const minRadius = [49.861524, 8.650514];
+const maxRadius = [49.859404, 8.647011];
 
 const minA = center[0] - minRadius[0];
 const minB = center[1] - minRadius[1];
@@ -41,7 +35,22 @@ const minDist = Math.sqrt(minA * minA + minB * minB);
 
 const maxA = center[0] - maxRadius[0];
 const maxB = center[1] - maxRadius[1];
+console.log(maxA);
+console.log(maxB);
 const maxDist = Math.sqrt(maxA * maxA + maxB * maxB);
+console.log(maxDist);
+
+
+const model = {
+  center: center,
+  // title: `ok`,
+  latitude: 0,
+  longitude: 0,
+  distance: '',
+  normDistance: '',
+  minDist: minDist,
+  maxDist: maxDist,
+};
 
 // console.log(minDist, maxDist);
 // minDist: 0.000999955123994715
@@ -127,39 +136,22 @@ class PlayerExperience extends soundworks.Experience {
       this.granular.buffer = this.audioBufferManager.data.haha;
       this.granular.connect(audioContext.destination);
 
-      console.log()
       this.syncTimeline.add(this.granular);
       this.syncTimeline._playControl.setLoopBoundaries(0, this.audioBufferManager.data.haha.duration);
       this.syncTimeline._playControl.loop = true;
 
-      this.positionVarScale = createScale([minDist, maxDist], [0, 0.121]);
-      this.periodScale = createScale([minDist, maxDist], [0.052, 0.174]);
-      this.resamplingScale = createScale([minDist, maxDist], [0, -1140]);
-      this.resamplingVarScale = createScale([minDist, maxDist], [0, 824]);
+      this.positionVarScale = createScale([0, 1], [0, 0.121]);
+      this.periodScale = createScale([0, 1], [0.052, 0.174]);
+      this.resamplingScale = createScale([0, 1], [0, -1140]);
+      this.resamplingVarScale = createScale([0, 1], [0, 824]);
       this.movingAverage = new MovingAverage(20);
 
       setInterval(() => {
-        navigator.geolocation.getCurrentPosition(this.onGeoSuccess, this.onGeoError)
+        navigator.geolocation.getCurrentPosition(this.onGeoSuccess, this.onGeoError);
       }, 200);
 
-      this.sharedParams.addParamListener('distanceMock', value => {
-        const dist = Math.min(maxDist, Math.max(minDist, value * maxDist));
-        const positionVar = this.positionVarScale(dist);
-        const period = this.periodScale(dist);
-        const resampling = this.resamplingScale(dist);
-        const resamplingVar = this.resamplingVarScale(dist);
-
-        console.log('dist:', dist);
-        console.log('positionVar:', positionVar);
-        console.log('period:', period);
-        console.log('resampling:', resampling);
-        console.log('resamplingVar:', resamplingVar);
-        console.log('------------------------------');
-
-        // this.granular.positionVar = positionVar;
-        // this.granular.period = period;
-        // this.granular.resampling = resampling;
-        // this.granular.resamplingVar = resamplingVar;
+      this.sharedParams.addParamListener('distanceMock', distance => {
+        // this.updateSynth(distance);
       });
 
       this.renderer = new PlayerRenderer();
@@ -167,7 +159,41 @@ class PlayerExperience extends soundworks.Experience {
       this.view.setPreRender(function(ctx, dt, canvasWidth, canvasHeight) {
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
       });
+
+      // console.log('test');
+      // this.onGeoSuccess({ coords: { latitude: 49.8617544, longitude:8.6495363 }});
+      // this.onGeoSuccess({ coords: { latitude: 49.861540, longitude:8.650513 }});
+      // this.onGeoSuccess({ coords: { latitude: 49.859386, longitude:8.646998 }});
+      // console.log('real value');
+      // this.onGeoSuccess({ coords: { latitude: 49.8617273, longitude:8.6521731 }});
     });
+  }
+
+  updateSynth(distance) {
+    distance = Math.min(1, Math.max(0, distance));
+    distance *= distance;
+
+    this.view.model.normDistance = distance;
+
+    const positionVar = this.positionVarScale(distance);
+    const period = this.periodScale(distance);
+    const resampling = this.resamplingScale(distance);
+    const resamplingVar = this.resamplingVarScale(distance);
+
+    console.log('distance:', distance);
+    // console.log('avg:', avg);
+    console.log('positionVar:', positionVar);
+    console.log('period:', period);
+    console.log('resampling:', resampling);
+    console.log('resamplingVar:', resamplingVar);
+    console.log('------------------------------');
+
+    this.granular.positionVar = positionVar;
+    this.granular.period = period;
+    this.granular.resampling = resampling;
+    this.granular.resamplingVar = resamplingVar;
+
+    this.view.render();
   }
 
   onGeoSuccess(geo) {
@@ -177,25 +203,22 @@ class PlayerExperience extends soundworks.Experience {
 
     const a = center[0] - lat;
     const b = center[1] - lng;
-    const distance = Math.min(maxDist, Math.max(minDist, Math.sqrt(a * a + b * b)));
+    let distance = Math.sqrt(a * a + b * b);
 
-    const avg = this.movingAverage.process(distance);
+    this.view.model.distance = distance;
 
-    const positionVar = this.positionVarScale(distance);
-    const period = this.periodScale(distance);
-    const resampling = this.resamplingScale(distance);
-    const resamplingVar = this.resamplingVarScale(distance);
+    // console.log(a);
+    // console.log(b);
+    // console.log(distance);
 
-    this.granular.positionVar = positionVar;
-    this.granular.period = period;
-    this.granular.resampling = resampling;
-    this.granular.resamplingVar = resamplingVar;
+    distance -= minDist;
+    distance /= (maxDist - minDist);
+    distance = Math.min(1, Math.max(0, distance));
 
     this.view.model.latitude = lat;
     this.view.model.longitude = lng;
-    this.view.model.distance = distance / distanceUnit;
 
-    this.view.render();
+    this.updateSynth(distance);
   }
 
   onGeoError(err) {

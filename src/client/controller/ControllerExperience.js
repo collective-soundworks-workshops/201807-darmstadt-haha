@@ -20,6 +20,7 @@ class ControllerExperience extends Experience {
     this.setGuiOptions('numPlayers', { readonly: true });
     this.setGuiOptions('control', { type: 'buttons' });
     this.setGuiOptions('seek', { type: 'slider', size: 'large' });
+    this.setGuiOptions('distanceMock', { type: 'slider', size: 'large' });
 
     if (options.auth)
       this.auth = this.require('auth');
